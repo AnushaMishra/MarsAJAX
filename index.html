@@ -1,0 +1,207 @@
+<!--
+name: Anusha Mishra
+pawprint: Am9fq
+date: 11/13/2020
+challenge: AJAX Fall 2020
+-->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+         <meta charset="utf-8">
+        <title>NASA</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body onload="pageloaded()">
+        <h1> Mars Explorer </h1>
+        <div id="wrapper">
+            
+        <div id="menu" class="clear">
+            
+            <label for="sol">Martian Sol:</label>
+            
+              <input type="number" id="sol" name="sol" min="0" max="2943" onchange="populatecameras()">
+                <label for="cameras">Camera:</label>
+                <select name="cameras" id="cameras">
+                </select>
+                <label for="rovers">Rover:</label>
+                <select name="rovers" id="rovers" onchange="displayinfo()">
+                </select>
+                <br>
+                <input type="submit" onclick="getContent()" value="Query API">
+            
+            
+            
+        </div>
+        
+        <div id="carousel" class="clear">
+            <p id="leftcontrol" class="clear" onclick="back()"> &#10094; </p>
+            <img id="pic" src="." alt="NASA Picture" class="clear">
+                <p id="rightcontrol" class="clear" onclick="forward()"> &#10095; </p>
+        </div>
+        
+        <div id="info" class="clear"></div>
+            
+        </div>
+        
+        <script>
+         
+            var manifest;
+            var xmlDoc;
+            var photoarray;
+            var slideindex = 0;
+            
+        function manifest(){
+            var solinput = document.getElementById("sol");
+            var sol = solinput.value;
+            var manifestreq = new XMLHttpRequest();
+            var manifesturl = "https://api.nasa.gov/mars-photos/api/v1/manifests/curiosity?api_key=";
+            var api_key = "Jo5J2Y3bkcuTkGAnQ924XcXoTBwy90W3ulsKsyCU";
+            
+            manifestreq.onload = function(){
+                if(manifestreq.status ==200){
+                manifest = manifestreq.responseText;
+                manifest = JSON.parse(manifest);
+                }
+                
+            };
+            manifestreq.open("GET", manifesturl + api_key);
+            manifestreq.send();
+        }
+            
+        function populatecameras(){
+            var solinput = document.getElementById("sol");
+            var sol = solinput.value;
+            console.dir(manifest.photo_manifest.photos[sol].cameras);
+             var option = document.createElement("option");
+            option.disabled = true;
+            option.selected = true;
+            clearcameras();
+            var textnode = document.createTextNode("Please Select a Camera");
+            option.appendChild(textnode);
+            document.getElementById("cameras").appendChild(option);
+                 for(var i = 0; i<manifest.photo_manifest.photos[sol].cameras.length; i++){
+                    var option = document.createElement("option");
+                    var textnode = document.createTextNode(manifest.photo_manifest.photos[sol].cameras[i]);
+                    option.appendChild(textnode);
+                    document.getElementById("cameras").appendChild(option);
+                }
+            
+        }
+            function back(){
+                if(slideindex<photoarray.photos.length && slideindex>=0){
+                slideindex--;
+                 document.getElementById("pic").src = photoarray.photos[slideindex].img_src; 
+                console.dir(slideindex);
+                }
+                
+                if(slideindex==photoarray.photos.length){
+                    slideindex = photoarray.photos.length-1;
+                    document.getElementById("pic").src = photoarray.photos[slideindex].img_src; 
+                    console.dir(slideindex);
+                }
+            }
+            
+            function forward(){
+                if(slideindex<photoarray.photos.length){
+                slideindex++;
+                document.getElementById("pic").src = photoarray.photos[slideindex].img_src; 
+                console.dir(slideindex);
+                }
+          
+            }
+            
+        function clearcameras(){
+                document.getElementById("cameras").innerHTML = '';
+        }
+            
+        function description(){
+            var describereq = new XMLHttpRequest();
+             var infobox = document.getElementById("info");
+            
+            describereq.onload = function(){
+                if(describereq.status ==200){
+                    xmlDoc = describereq.responseXML;
+                    var rovernames = xmlDoc.getElementsByTagName("name");
+                    var add = '';
+                    add += '<option value="" disabled selected>Please Select a Rover</option>';
+                    
+                    for(i=0; i<rovernames.length; i++){
+                        add +="<option value='" +
+                            rovernames[i].childNodes[0].nodeValue + "'>" +
+                            rovernames[i].childNodes[0].nodeValue + "</option>";
+                    }
+                    document.getElementById("rovers").innerHTML = add; 
+                }
+            }
+        describereq.open("GET", "https://www.professorwergeles.com/webService.php?content=data&format=xml", true);
+         describereq.send();  
+        }
+    
+    function displayinfo(){
+        var selectedrover = document.getElementById("rovers").value;
+         var output = '';
+        var roverinfo = xmlDoc.getElementsByTagName("description");
+        var rovernames = xmlDoc.getElementsByTagName("name");
+        var launchdates = xmlDoc.getElementsByTagName("launch_date");
+             var infobox = document.getElementById("info");
+        
+        console.dir(roverinfo);
+        var index;
+        for(var i = 0; i<rovernames.length;i++){
+            if(rovernames[i].childNodes[0].nodeValue==selectedrover){
+                index = i;
+                console.log(index);
+                output = "<h1>"  + "Rover: " + rovernames[index].childNodes[0].nodeValue + "</h1>" + "<h1>" + "Launchdate: " + launchdates[index].childNodes[0].nodeValue + "</h1>" ;
+                infobox.innerHTML = output + roverinfo[index].childNodes[0].nodeValue;
+                i = rovernames.length;
+            }
+        }
+        
+    }
+            
+    function pageloaded(){
+        manifest();
+        description();
+    }
+            
+     function getContent() {
+         var loading = document.createElement('h1'); 
+         var loadmessage = document.createTextNode("LOADING...");
+        loading.appendChild(loadmessage);
+        document.getElementById("carousel").appendChild(loading);
+         var sol = document.getElementById("sol").value;
+         var cam = document.getElementById("cameras").value;
+            var photoreq = new XMLHttpRequest();
+            
+                
+              var photos = "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=" + sol + "&camera=" + cam + "&api_key=";
+            var api_key = "Jo5J2Y3bkcuTkGAnQ924XcXoTBwy90W3ulsKsyCU";
+            
+         photoreq.onload = function(){
+	       if(photoreq.status == 200){
+                var photoresponse = photoreq.responseText;
+                photoresponse = JSON.parse(photoresponse);
+                photoarray = photoresponse;
+                console.dir(photoresponse);
+
+               if(photoresponse.photos.length>0){
+                    document.getElementById("pic").style.display = "block";
+                   document.getElementById("carousel").removeChild(loading);
+                  document.getElementById("pic").src = photoresponse.photos[slideindex].img_src; 
+               }
+               else{
+                   alert("Sorry, there are no available pictures for this configuration. Please try new values.");
+                   document.getElementById("sol").value = '';
+                    document.getElementById("carousel").removeChild(loading);
+                   clearcameras();
+                   
+               }
+            }
+         };
+         
+          photoreq.open("GET", photos + api_key );
+            photoreq.send();
+     }
+        </script>
+    </body>
+</html>
